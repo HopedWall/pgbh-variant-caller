@@ -12,8 +12,8 @@ pub enum BubbleType {
 
 #[derive(Debug)]
 pub struct Bubble {
-    start: u64,
-    end: u64,
+    pub(crate) start: u64,
+    pub(crate) end: u64,
     bubble_type: BubbleType,
 }
 
@@ -101,24 +101,10 @@ pub fn find_bubbles(graph: &HashGraph) -> Vec<Bubble> {
 
         println!("Bubbles: {:#?}", bubbles);
 
-        /*
-        loop {
-            curr_width_queue = next_width_queue.clone();
-            // Iterate over BFS tree
-            while let Some(curr_handle) = curr_width_queue.pop_front() {
-                // Check right edges in the original graph
-                for handle in graph.handle_edges_iter(curr_handle, Direction::Right) {
-                    if !next_width_queue.contains(&handle)
-                        && handle.as_integer() > curr_handle.as_integer()
-                    {
-                        next_width_queue.push_back(handle);
-                    }
-                }
-            }
-
-            next_width_queue = curr_width_queue.clone();
+        for edge in graph.edges_iter() {
+            println!("From {:#?} to {:#?}", edge.0.as_integer(), edge.1.as_integer());
         }
-         */
+
     }
 
     bubbles
