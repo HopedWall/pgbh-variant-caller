@@ -21,11 +21,10 @@ pub struct Bubble {
 fn find_neighbors_to_add(graph: &HashGraph, curr_handle: Handle) -> Vec<Handle> {
     graph
         .handle_edges_iter(curr_handle, Direction::Right)
-        .filter_map(|x|
-            match x.as_integer() > curr_handle.as_integer() {
-                true => Some(x),
-                _ => None
-            })
+        .filter_map(|x| match x.as_integer() > curr_handle.as_integer() {
+            true => Some(x),
+            _ => None,
+        })
         .collect()
 }
 
@@ -68,43 +67,38 @@ pub fn find_bubbles(graph: &HashGraph) -> Vec<Bubble> {
             }
         }
 
-        println!("Fronts are: {:#?}", fronts);
-        println!("Bfs tree widths are: {:#?}", bfs_tree_widths);
+        //println!("Fronts are: {:#?}", fronts);
+        //println!("Bfs tree widths are: {:#?}", bfs_tree_widths);
 
         let mut bubble_open: VecDeque<Handle> = VecDeque::new();
         let mut bubble_close: VecDeque<Handle> = VecDeque::new();
         let mut curr_handle_id: u64 = 2;
         for level in 0..bfs_tree_widths.len() - 1 {
             let width_i = *bfs_tree_widths.get(level).unwrap();
-            let width_j = *bfs_tree_widths.get(level+1).unwrap();
+            let width_j = *bfs_tree_widths.get(level + 1).unwrap();
 
             if width_j > width_i {
                 bubble_open.push_front(Handle::from_integer(curr_handle_id));
             } else if width_j < width_i {
-                bubble_close.push_front(Handle::from_integer(curr_handle_id + 2*width_i as u64));
+                bubble_close.push_front(Handle::from_integer(curr_handle_id + 2 * width_i as u64));
             }
 
-            curr_handle_id += 2*width_i as u64;
+            curr_handle_id += 2 * width_i as u64;
         }
 
-        println!("Bubble opens are: {:#?}", bubble_open);
-        println!("Bubble closes are: {:#?}", bubble_close);
+        //println!("Bubble opens are: {:#?}", bubble_open);
+        //println!("Bubble closes are: {:#?}", bubble_close);
 
         //assert_eq!(bubble_open.len(), bubble_close.len());
         for (open, close) in bubble_open.iter().zip(bubble_close.iter()) {
             bubbles.push(Bubble {
                 start: open.as_integer(),
                 end: close.as_integer(),
-                bubble_type: BubbleType::Simple
+                bubble_type: BubbleType::Simple,
             });
         }
 
-        println!("Bubbles: {:#?}", bubbles);
-
-        for edge in graph.edges_iter() {
-            println!("From {:#?} to {:#?}", edge.0.as_integer(), edge.1.as_integer());
-        }
-
+        //println!("Bubbles: {:#?}", bubbles);
     }
 
     bubbles
@@ -112,10 +106,10 @@ pub fn find_bubbles(graph: &HashGraph) -> Vec<Bubble> {
 
 #[cfg(test)]
 mod test {
+    use super::*;
     use handlegraph::handle::Edge;
     use handlegraph::mutablehandlegraph::MutableHandleGraph;
     use handlegraph::pathgraph::PathHandleGraph;
-    use super::*;
 
     /// This function creates a simple graph, used for debugging
     ///          | 2: CT \
@@ -186,5 +180,3 @@ mod test {
         find_bubbles(&graph);
     }
 }
-
-
