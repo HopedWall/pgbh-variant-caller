@@ -1,7 +1,7 @@
 use std::io;
 use std::path::PathBuf;
 
-use csv::Writer;
+use csv;
 use handlegraph::handle::Edge;
 
 use crate::bubbles::Bubble;

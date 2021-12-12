@@ -3,14 +3,15 @@ use handlegraph::handlegraph::HandleGraph;
 use handlegraph::hashgraph::HashGraph;
 use itertools::Itertools;
 use std::collections::VecDeque;
+use rayon::prelude::*;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum BubbleType {
     Simple,
     Complex,
 }
 
-#[derive(Debug)]
+#[derive(PartialEq, Eq, Debug)]
 pub struct Bubble {
     pub(crate) start: u64,
     pub(crate) end: u64,
@@ -38,13 +39,27 @@ fn advance_bfs(graph: &HashGraph, curr_front: Vec<Handle>) -> Vec<Handle> {
         .collect()
 }
 
+// Advance the current front of the BFS in parallel
+fn advance_bfs_parallel(graph: &HashGraph, curr_front: Vec<Handle>) -> Vec<Handle> {
+    let mut new_front: Vec<Handle> =
+        curr_front
+        .par_iter()
+        .flat_map(|x| find_neighbors_to_add(graph, *x))
+        .collect();
+
+    new_front.par_sort_unstable();
+    new_front.dedup();
+
+    new_front
+}
+
 pub fn find_bubbles(graph: &HashGraph) -> Vec<Bubble> {
     let mut bubbles: Vec<Bubble> = vec![];
 
     // Run a BFS visit of the graph, using a Queue
     let handles: Vec<Handle> = graph.handles_iter().sorted().collect();
     let mut bfs_tree_widths: Vec<usize> = vec![];
-    let mut fronts: Vec<Vec<Handle>> = vec![];
+    //let mut fronts: Vec<Vec<Handle>> = vec![];
 
     if !handles.is_empty() {
         // We know that the graph starts with a single node
@@ -53,16 +68,16 @@ pub fn find_bubbles(graph: &HashGraph) -> Vec<Bubble> {
         // Initialize the BFS
         let first_handle = handles.first().unwrap().clone();
         let first_front = vec![first_handle];
-        fronts.push(first_front.clone());
+        //fronts.push(first_front.clone());
 
         let mut new_front = advance_bfs(graph, first_front.clone());
         bfs_tree_widths.push(new_front.len());
-        fronts.push(new_front.clone());
+        //fronts.push(new_front.clone());
 
         while !new_front.is_empty() {
-            new_front = advance_bfs(graph, new_front);
+            new_front = advance_bfs_parallel(graph, new_front);
             if !new_front.is_empty() {
-                fronts.push(new_front.clone());
+                //fronts.push(new_front.clone());
                 bfs_tree_widths.push(new_front.len());
             }
         }
@@ -178,5 +193,23 @@ mod test {
     fn test_superbubble() {
         let graph = create_simple_graph_superbubble();
         find_bubbles(&graph);
+    }
+
+    #[test]
+    fn check_seq_and_parallel_return_same() {
+        let graph = create_simple_graph_bubble();
+        let new_frontier_1 = advance_bfs(&graph, vec![Handle(2)]);
+        let new_frontier_2 = advance_bfs(&graph, vec![Handle(2)]);
+
+        println!("1: {:#?}", new_frontier_1);
+        println!("2: {:#?}", new_frontier_2);
+        assert_eq!(new_frontier_1, new_frontier_2);
+
+        let new_frontier_1 = advance_bfs(&graph, vec![Handle(4), Handle(6)]);
+        let new_frontier_2 = advance_bfs(&graph, vec![Handle(4), Handle(6)]);
+
+        println!("1: {:#?}", new_frontier_1);
+        println!("2: {:#?}", new_frontier_2);
+        assert_eq!(new_frontier_1, new_frontier_2);
     }
 }
